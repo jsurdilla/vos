@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 
+/// Errors that can occur during audio recording
 enum AudioRecorderError: Error, LocalizedError {
   case recordingFailed
   case microphoneAccessDenied
@@ -18,13 +19,15 @@ enum AudioRecorderError: Error, LocalizedError {
   }
 }
 
-class AudioRecorder: NSObject, AVAudioRecorderDelegate {
+/// Handles audio recording to temporary files
+final class AudioRecorder: NSObject, AVAudioRecorderDelegate {
   private var audioRecorder: AVAudioRecorder?
   private var recordingURL: URL?
   var isRecording: Bool {
     audioRecorder?.isRecording ?? false
   }
 
+  /// Requests microphone permission and starts recording
   func startRecording(completion: @escaping (Result<Void, Error>) -> Void) {
     // Request microphone permission
     AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
@@ -53,7 +56,7 @@ class AudioRecorder: NSObject, AVAudioRecorderDelegate {
       AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
       AVSampleRateKey: 44100.0,
       AVNumberOfChannelsKey: 1,
-      AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+      AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
     ]
 
     do {
@@ -66,6 +69,7 @@ class AudioRecorder: NSObject, AVAudioRecorderDelegate {
     }
   }
 
+  /// Stops the current recording and returns the audio file URL
   func stopRecording(completion: @escaping (Result<URL, Error>) -> Void) {
     guard let recorder = audioRecorder, recorder.isRecording else {
       completion(.failure(AudioRecorderError.noRecordingInProgress))

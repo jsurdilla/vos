@@ -15,7 +15,13 @@ let package = Package(
   targets: [
     .executableTarget(
       name: "vos",
-      path: "vos/vos"
+      path: "vos/vos",
+      exclude: ["Info.plist"]
+    ),
+    .testTarget(
+      name: "vosTests",
+      dependencies: ["vos"],
+      path: "vos/vosTests"
     )
   ]
 )

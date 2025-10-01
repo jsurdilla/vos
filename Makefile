@@ -1,4 +1,4 @@
-.PHONY: build run clean format lint build-app install uninstall help
+.PHONY: build run clean format lint test build-app install uninstall help
 
 help:
 	@echo "vos - macOS Menu Bar Transcription App"
@@ -6,6 +6,7 @@ help:
 	@echo "Available commands:"
 	@echo "  make build       - Build debug binary"
 	@echo "  make run         - Build and run from source"
+	@echo "  make test        - Run unit tests"
 	@echo "  make build-app   - Build vos.app bundle"
 	@echo "  make install     - Build and install to ~/Applications"
 	@echo "  make uninstall   - Remove vos.app from Applications"
@@ -64,3 +65,7 @@ lint:
 	else \
 		echo "swiftlint not installed. Install with: brew install swiftlint"; \
 	fi
+
+test:
+	@echo "Running unit tests..."
+	@swift test

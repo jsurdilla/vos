@@ -1,6 +1,6 @@
-# VoiceOS
+# vos
 
-A simple, elegant macOS menu bar app for quick audio capture and transcription using OpenAI's Whisper API.
+A simple macOS menu bar app for quick audio capture and transcription using OpenAI's Whisper API.
 
 ## Features
 
@@ -48,12 +48,12 @@ make help    # Show all commands
 ```bash
 swift build                # Debug build
 swift build -c release     # Release build
-./.build/debug/VoiceOS     # Run debug
+./.build/debug/vos     # Run debug
 ```
 
 ## Usage
 
-1. **Start VoiceOS**: Run the app - a microphone icon will appear in your menu bar
+1. **Start vos**: Run the app - a microphone icon will appear in your menu bar
 2. **Start Recording**: Click the menu bar icon or press `Cmd+Shift+R`
 3. **Stop Recording**: Click the icon or press `Cmd+Shift+R` again
 4. **Get Transcription**: The app will automatically transcribe and copy to clipboard
@@ -70,7 +70,7 @@ The floating status window shows:
 
 ## Permissions
 
-VoiceOS requires:
+vos requires:
 
 - **Microphone Access**: To record audio
 - **Accessibility** (optional): For global keyboard shortcuts
@@ -80,8 +80,8 @@ Grant these when prompted on first run.
 ## Architecture
 
 ```
-VoiceOS/
-├── VoiceOSApp.swift          # Main app entry point
+vos/
+├── vosApp.swift          # Main app entry point
 ├── AppDelegate.swift         # Menu bar & coordination logic
 ├── Services/
 │   ├── AudioRecorder.swift   # Audio recording service
@@ -107,7 +107,7 @@ brew install swiftlint swift-format
 
 ### Project Structure
 
-- `/VoiceOS` - Main app source code
+- `/vos` - Main app source code
 - `/scratchpad` - Planning docs and notes
 - `Package.swift` - Swift package configuration
 - `Makefile` - Build and dev commands

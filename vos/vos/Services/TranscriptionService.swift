@@ -1,5 +1,6 @@
 import Foundation
 
+/// Errors that can occur during transcription
 enum TranscriptionError: Error, LocalizedError {
   case invalidResponse
   case apiError(String)
@@ -17,33 +18,48 @@ enum TranscriptionError: Error, LocalizedError {
   }
 }
 
-class TranscriptionService {
+/// Service for transcribing audio using OpenAI Whisper API
+final class TranscriptionService {
   private let apiURL = "https://api.openai.com/v1/audio/transcriptions"
   private let model = "gpt-4o-transcribe"
 
+  /// Transcribes audio file using OpenAI Whisper API
   func transcribe(audioURL: URL, completion: @escaping (Result<String, Error>) -> Void) {
-    // Get API key from settings
-    guard let apiKey = SettingsManager.shared.getAPIKey() else {
+    guard let apiKey = validateAndGetAPIKey() else {
       completion(
         .failure(TranscriptionError.apiError("No API key configured. Please add one in Settings.")))
       return
     }
 
-    // Validate key format
+    do {
+      let request = try createRequest(apiKey: apiKey, audioURL: audioURL)
+      executeRequest(request, completion: completion)
+    } catch {
+      completion(.failure(error))
+    }
+  }
+
+  /// Validates and retrieves API key from storage
+  private func validateAndGetAPIKey() -> String? {
+    guard let apiKey = SettingsManager.shared.getAPIKey() else {
+      return nil
+    }
+
     guard apiKey.hasPrefix("sk-") else {
-      completion(
-        .failure(TranscriptionError.apiError("Invalid API key format (must start with 'sk-')")))
-      return
+      return nil
     }
 
     // Log for debugging (safe - only first/last chars)
     let preview = "\(apiKey.prefix(7))...\(apiKey.suffix(4))"
     print("✅ Using API key: \(preview) (length: \(apiKey.count))")
 
-    // Create request
+    return apiKey
+  }
+
+  /// Creates HTTP request for transcription
+  private func createRequest(apiKey: String, audioURL: URL) throws -> URLRequest {
     guard let url = URL(string: apiURL) else {
-      completion(.failure(TranscriptionError.invalidResponse))
-      return
+      throw TranscriptionError.invalidResponse
     }
 
     var request = URLRequest(url: url)
@@ -56,15 +72,15 @@ class TranscriptionService {
     request.setValue(
       "multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
-    do {
-      request.httpBody = try createMultipartBody(
-        boundary: boundary, audioURL: audioURL)
-    } catch {
-      completion(.failure(error))
-      return
-    }
+    request.httpBody = try createMultipartBody(boundary: boundary, audioURL: audioURL)
+    return request
+  }
 
-    // Make request
+  /// Executes the network request and handles response
+  private func executeRequest(
+    _ request: URLRequest,
+    completion: @escaping (Result<String, Error>) -> Void
+  ) {
     let task = URLSession.shared.dataTask(with: request) { data, _, error in
       if let error = error {
         completion(.failure(TranscriptionError.networkError(error)))
@@ -76,29 +92,36 @@ class TranscriptionService {
         return
       }
 
-      // Parse response
-      do {
-        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-          if let text = json["text"] as? String {
-            completion(.success(text))
-          } else if let error = json["error"] as? [String: Any],
-            let message = error["message"] as? String
-          {
-            completion(.failure(TranscriptionError.apiError(message)))
-          } else {
-            completion(.failure(TranscriptionError.invalidResponse))
-          }
-        } else {
-          completion(.failure(TranscriptionError.invalidResponse))
-        }
-      } catch {
-        completion(.failure(error))
-      }
+      self.parseResponse(data, completion: completion)
     }
 
     task.resume()
   }
 
+  /// Parses API response JSON
+  private func parseResponse(
+    _ data: Data,
+    completion: @escaping (Result<String, Error>) -> Void
+  ) {
+    do {
+      guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        completion(.failure(TranscriptionError.invalidResponse))
+        return
+      }
+
+      if let text = json["text"] as? String {
+        completion(.success(text))
+      } else if let error = json["error"] as? [String: Any], let message = error["message"] as? String {
+        completion(.failure(TranscriptionError.apiError(message)))
+      } else {
+        completion(.failure(TranscriptionError.invalidResponse))
+      }
+    } catch {
+      completion(.failure(error))
+    }
+  }
+
+  /// Creates multipart/form-data body for file upload
   private func createMultipartBody(boundary: String, audioURL: URL) throws -> Data {
     var body = Data()
 

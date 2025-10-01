@@ -44,7 +44,9 @@ struct SettingsView: View {
             statusMessage = ""  // Clear message on edit
           }
 
-          Button(action: { showKey.toggle() }) {
+          Button {
+            showKey.toggle()
+          } label: {
             Image(systemName: showKey ? "eye.slash.fill" : "eye.fill")
               .foregroundStyle(.secondary)
               .frame(width: 20, height: 20)

@@ -1,8 +1,11 @@
 import Foundation
 
 /// Manages app settings using UserDefaults
-/// This is the standard approach for Mac apps (Slack, Discord, VSCode, etc.)
-class SettingsManager {
+///
+/// Uses UserDefaults for API key storage, which is the standard approach for Mac apps
+/// (similar to Slack, Discord, VSCode, etc.). Automatically trims whitespace and newlines
+/// to prevent corruption issues.
+final class SettingsManager {
   static let shared = SettingsManager()
 
   private let defaults = UserDefaults.standard

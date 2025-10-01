@@ -42,12 +42,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Create menu
     let menu = NSMenu()
 
-    menu.addItem(
-      NSMenuItem(
-        title: "Start Recording",
-        action: #selector(toggleRecording),
-        keyEquivalent: "r"
-      ))
+    let recordingItem = NSMenuItem(
+      title: "Start Recording",
+      action: #selector(toggleRecording),
+      keyEquivalent: "r"
+    )
+    recordingItem.keyEquivalentModifierMask = [.command, .shift]
+    menu.addItem(recordingItem)
 
     menu.addItem(NSMenuItem.separator())
 
@@ -137,7 +138,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let alert = NSAlert()
     alert.messageText = "vos"
     alert.informativeText = """
-      A simple, elegant audio transcription app.
+      A simple audio transcription app.
 
       Version 1.0
       Powered by OpenAI Whisper API (gpt-4o-transcribe)
@@ -169,9 +170,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func updateMenuItemTitle(recording: Bool) {
-    if let menu = statusItem?.menu,
-      let recordItem = menu.item(at: 0)
-    {
+    if let menu = statusItem?.menu, let recordItem = menu.item(at: 0) {
       recordItem.title = recording ? "Stop Recording" : "Start Recording"
     }
   }
