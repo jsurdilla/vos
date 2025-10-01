@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# VoiceOS Launch Script
+# vos Launch Script
 
-echo "🎤 VoiceOS - Audio Transcription App"
+echo "🎤 vos - Audio Transcription App"
 echo ""
 
 # Build if needed
-if [ ! -f "./.build/debug/VoiceOS" ]; then
-    echo "Building VoiceOS..."
+if [ ! -f "./.build/debug/vos" ]; then
+    echo "Building vos..."
     swift build
     echo ""
 fi
@@ -18,10 +18,10 @@ echo "  ✓ Make sure to grant Microphone permission when prompted"
 echo "  ✓ For global shortcuts, grant Accessibility permission if needed"
 echo ""
 
-echo "🚀 Launching VoiceOS..."
-echo "  • Click the microphone icon in menu bar to start/stop recording"
-echo "  • Or use Cmd+Shift+R keyboard shortcut"
+echo "🚀 Launching vos..."
+echo "  • Click the microphone icon in menu bar for options"
+echo "  • Or use Cmd+Shift+R keyboard shortcut to start/stop recording"
 echo ""
 
 # Launch the app
-./.build/debug/VoiceOS
+./.build/debug/vos

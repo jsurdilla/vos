@@ -2,20 +2,20 @@
 import PackageDescription
 
 let package = Package(
-    name: "VoiceOS",
-    platforms: [
-        .macOS(.v13)
-    ],
-    products: [
-        .executable(
-            name: "VoiceOS",
-            targets: ["VoiceOS"]
-        )
-    ],
-    targets: [
-        .executableTarget(
-            name: "VoiceOS",
-            path: "VoiceOS/VoiceOS"
-        )
-    ]
+  name: "vos",
+  platforms: [
+    .macOS(.v13)
+  ],
+  products: [
+    .executable(
+      name: "vos",
+      targets: ["vos"]
+    )
+  ],
+  targets: [
+    .executableTarget(
+      name: "vos",
+      path: "vos/vos"
+    )
+  ]
 )

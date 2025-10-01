@@ -18,12 +18,28 @@ enum TranscriptionError: Error, LocalizedError {
 }
 
 class TranscriptionService {
-  private let apiKey =
-    "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"
   private let apiURL = "https://api.openai.com/v1/audio/transcriptions"
   private let model = "gpt-4o-transcribe"
 
   func transcribe(audioURL: URL, completion: @escaping (Result<String, Error>) -> Void) {
+    // Get API key from settings
+    guard let apiKey = SettingsManager.shared.getAPIKey() else {
+      completion(
+        .failure(TranscriptionError.apiError("No API key configured. Please add one in Settings.")))
+      return
+    }
+
+    // Validate key format
+    guard apiKey.hasPrefix("sk-") else {
+      completion(
+        .failure(TranscriptionError.apiError("Invalid API key format (must start with 'sk-')")))
+      return
+    }
+
+    // Log for debugging (safe - only first/last chars)
+    let preview = "\(apiKey.prefix(7))...\(apiKey.suffix(4))"
+    print("✅ Using API key: \(preview) (length: \(apiKey.count))")
+
     // Create request
     guard let url = URL(string: apiURL) else {
       completion(.failure(TranscriptionError.invalidResponse))
@@ -33,6 +49,7 @@ class TranscriptionService {
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+    print("🌐 Auth header length: \(7 + apiKey.count) (should be 171)")
 
     // Create multipart form data
     let boundary = "Boundary-\(UUID().uuidString)"
@@ -65,7 +82,8 @@ class TranscriptionService {
           if let text = json["text"] as? String {
             completion(.success(text))
           } else if let error = json["error"] as? [String: Any],
-            let message = error["message"] as? String {
+            let message = error["message"] as? String
+          {
             completion(.failure(TranscriptionError.apiError(message)))
           } else {
             completion(.failure(TranscriptionError.invalidResponse))

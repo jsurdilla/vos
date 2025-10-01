@@ -5,6 +5,7 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
   private var statusItem: NSStatusItem?
   private var statusWindow: StatusWindowController?
+  private var settingsWindow: SettingsWindowController?
   private let audioRecorder = AudioRecorder()
   private let transcriptionService = TranscriptionService()
   private var hotKeyRef: EventHotKeyRef?
@@ -19,19 +20,61 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Setup global shortcut
     setupGlobalShortcut()
 
-    // Setup status window
+    // Setup windows
     statusWindow = StatusWindowController()
+    settingsWindow = SettingsWindowController()
+
+    // Show welcome if no API key
+    if !SettingsManager.shared.hasAPIKey() {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        self.showWelcome()
+      }
+    }
   }
 
   private func setupMenuBar() {
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
     if let button = statusItem?.button {
-      // Use a microphone symbol
-      button.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "VoiceOS")
-      button.action = #selector(toggleRecording)
-      button.target = self
+      button.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "vos")
     }
+
+    // Create menu
+    let menu = NSMenu()
+
+    menu.addItem(
+      NSMenuItem(
+        title: "Start Recording",
+        action: #selector(toggleRecording),
+        keyEquivalent: "r"
+      ))
+
+    menu.addItem(NSMenuItem.separator())
+
+    menu.addItem(
+      NSMenuItem(
+        title: "Settings...",
+        action: #selector(openSettings),
+        keyEquivalent: ","
+      ))
+
+    menu.addItem(NSMenuItem.separator())
+
+    menu.addItem(
+      NSMenuItem(
+        title: "About vos",
+        action: #selector(showAbout),
+        keyEquivalent: ""
+      ))
+
+    menu.addItem(
+      NSMenuItem(
+        title: "Quit vos",
+        action: #selector(quitApp),
+        keyEquivalent: "q"
+      ))
+
+    statusItem?.menu = menu
   }
 
   private func setupGlobalShortcut() {
@@ -44,18 +87,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     eventType.eventClass = OSType(kEventClassKeyboard)
     eventType.eventKind = OSType(kEventHotKeyPressed)
 
-        InstallEventHandler(
-            GetApplicationEventTarget(),
-            { (_, _, userData) -> OSStatus in
-                let appDelegate = Unmanaged<AppDelegate>.fromOpaque(userData!).takeUnretainedValue()
-                appDelegate.toggleRecording()
-                return noErr
-            },
-            1,
-            &eventType,
-            Unmanaged.passUnretained(self).toOpaque(),
-            nil
-        )
+    InstallEventHandler(
+      GetApplicationEventTarget(),
+      { (_, _, userData) -> OSStatus in
+        let appDelegate = Unmanaged<AppDelegate>.fromOpaque(userData!).takeUnretainedValue()
+        appDelegate.toggleRecording()
+        return noErr
+      },
+      1,
+      &eventType,
+      Unmanaged.passUnretained(self).toOpaque(),
+      nil
+    )
 
     RegisterEventHotKey(
       UInt32(kVK_ANSI_R),
@@ -68,10 +111,68 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   @objc private func toggleRecording() {
+    // Check if API key is configured
+    guard SettingsManager.shared.hasAPIKey() else {
+      statusWindow?.show(message: "Please configure API key in Settings", state: .error)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+        self.statusWindow?.hide()
+      }
+      return
+    }
+
     if audioRecorder.isRecording {
       stopRecording()
+      updateMenuItemTitle(recording: false)
     } else {
       startRecording()
+      updateMenuItemTitle(recording: true)
+    }
+  }
+
+  @objc private func openSettings() {
+    settingsWindow?.show()
+  }
+
+  @objc private func showAbout() {
+    let alert = NSAlert()
+    alert.messageText = "vos"
+    alert.informativeText = """
+      A simple, elegant audio transcription app.
+
+      Version 1.0
+      Powered by OpenAI Whisper API (gpt-4o-transcribe)
+      """
+    alert.alertStyle = .informational
+    alert.addButton(withTitle: "OK")
+    alert.runModal()
+  }
+
+  @objc private func quitApp() {
+    NSApp.terminate(nil)
+  }
+
+  private func showWelcome() {
+    let alert = NSAlert()
+    alert.messageText = "Welcome to vos!"
+    alert.informativeText = """
+      To get started, add your OpenAI API key in Settings.
+
+      You can get one from platform.openai.com
+      """
+    alert.alertStyle = .informational
+    alert.addButton(withTitle: "Open Settings")
+    alert.addButton(withTitle: "Later")
+
+    if alert.runModal() == .alertFirstButtonReturn {
+      openSettings()
+    }
+  }
+
+  private func updateMenuItemTitle(recording: Bool) {
+    if let menu = statusItem?.menu,
+      let recordItem = menu.item(at: 0)
+    {
+      recordItem.title = recording ? "Stop Recording" : "Start Recording"
     }
   }
 
